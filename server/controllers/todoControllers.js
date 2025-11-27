@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { sendEvent } from "../utils/kafkaProducer.js";
+import { v4 as uuidv4 } from "uuid";
 
 const defaultNumberOfPartitions = process.env.DEFAULT_PARTITIONS_OF_KAFKA_TOPICS || 4;
 
@@ -9,15 +10,27 @@ const getAllToDosController = async (req, res) => {
     try {
         // Extracting information from req.body
         const { userId, priority, status } = req.params;
+        console.log("We got the Headers: ", req);
+        const clientId = req.get("client-id");
+        const requestId = uuidv4();
         const filter = {};
 
+
+        // If clientId is Not Given We will Not Know Where to send the final response thus essential to have 
+        if(!clientId){
+            return res.send({
+                success: false,
+                message: "clientId is Required....",
+            });
+        } 
+
         // If Priority is Given Filter on basis of priority
-        if(priority) {
+        if (priority) {
             filter.priority = priority;
         }
-        
+
         // If Priority is Given Filter on basis of priority
-        if(status) {
+        if (status) {
             filter.status = status;
         }
 
@@ -28,6 +41,8 @@ const getAllToDosController = async (req, res) => {
         };
         const dateNow = new Date();
         const metadata = {
+            clientId: clientId,
+            requestId: requestId,
             operationToPerform: ("read").toLowerCase(),
             createdAt: dateNow.toISOString(),
             updateAt: dateNow.toISOString(),
@@ -47,7 +62,7 @@ const getAllToDosController = async (req, res) => {
     } catch (error) {
         console.log("Error: ", error);
         console.log("Something went wrong while sending the Reading event....");
-        
+
         return res.status(500).json(
             {
                 success: false,
@@ -63,6 +78,16 @@ const createTodoController = async (req, res) => {
     try {
         // Extracting information from req.body
         const { userId, name, priority, status } = req.body;
+        const clientId = req.get("client-id");
+        const requestId = uuidv4();
+
+        // If clientId is Not Given We will Not Know Where to send the final response thus essential to have 
+        if(!clientId){
+            return res.send({
+                success: false,
+                message: "clientId is Required....",
+            });
+        }
 
         // Checking if all things are given 
         if (!name) {
@@ -93,6 +118,8 @@ const createTodoController = async (req, res) => {
         };
         const dateNow = new Date();
         const metadata = {
+            clientId: clientId,
+            requestId: requestId,
             operationToPerform: ("create").toLowerCase(),
             createdAt: dateNow.toISOString(),
             updateAt: dateNow.toISOString(),
@@ -112,7 +139,7 @@ const createTodoController = async (req, res) => {
     } catch (error) {
         console.log("Error: ", error);
         console.log("Something went wrong while sending the Creating event....");
-        
+
         return res.status(500).json(
             {
                 success: false,
@@ -128,9 +155,19 @@ const updateTodoController = async (req, res) => {
     try {
         // Extracting information from req.body
         const { userId, id, name, priority, status } = req.body;
+        const clientId = req.get("client-id");
+        const requestId = uuidv4();
+
+        // If clientId is Not Given We will Not Know Where to send the final response thus essential to have 
+        if(!clientId){
+            return res.send({
+                success: false,
+                message: "clientId is Required....",
+            });
+        }
 
         // Checking if all things are given 
-        if(!id) {
+        if (!id) {
             return res.send({
                 success: false,
                 message: "Todo Id is required....",
@@ -159,6 +196,8 @@ const updateTodoController = async (req, res) => {
         };
         const dateNow = new Date();
         const metadata = {
+            clientId: clientId,
+            requestId: requestId,
             operationToPerform: ("update").toLowerCase(),
             createdAt: dateNow.toISOString(),
             updateAt: dateNow.toISOString(),
@@ -178,7 +217,7 @@ const updateTodoController = async (req, res) => {
     } catch (error) {
         console.log("Error: ", error);
         console.log("Something went wrong while sending the Updating event....");
-        
+
         return res.status(500).json(
             {
                 success: false,
@@ -194,9 +233,20 @@ const deleteTodoController = async (req, res) => {
     try {
         // Extracting information from req.body
         const { userId, id } = req.body;
+        const clientId = req.get("client-id");
+        const requestId = uuidv4();
+
+
+        // If clientId is Not Given We will Not Know Where to send the final response thus essential to have 
+        if(!clientId){
+            return res.send({
+                success: false,
+                message: "clientId is Required....",
+            });
+        }
 
         // Checking if all things are given 
-        if(!id) {
+        if (!id) {
             return res.send({
                 success: false,
                 message: "Todo Id is required....",
@@ -209,6 +259,8 @@ const deleteTodoController = async (req, res) => {
         };
         const dateNow = new Date();
         const metadata = {
+            clientId: clientId,
+            requestId: requestId,
             operationToPerform: ("delete").toLowerCase(),
             createdAt: dateNow.toISOString(),
             updateAt: dateNow.toISOString(),
@@ -228,7 +280,7 @@ const deleteTodoController = async (req, res) => {
     } catch (error) {
         console.log("Error: ", error);
         console.log("Something went wrong while sending the Deleting event....");
-        
+
         return res.status(500).json(
             {
                 success: false,

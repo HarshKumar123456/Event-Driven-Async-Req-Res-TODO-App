@@ -2,6 +2,7 @@ import "dotenv/config";
 import { kafka } from "../config/kafka.js";
 import connectDB from "../config/db.js";
 import Todo from "../models/todoModel.js";
+import { publishToRedisPubSub } from "../utils/redisPublisher.js";
 
 const group = process.argv[2];
 
@@ -32,14 +33,26 @@ async function init() {
         //     updatedFields: updatedFields,
         // };
 
+
+        // const metadata = {
+        //     clientId: clientId,
+        //     requestId: requestId,
+        //     operationToPerform: ("update").toLowerCase(),
+        //     createdAt: dateNow.toISOString(),
+        //     updateAt: dateNow.toISOString(),
+        // }
+
         const todo = await Todo.findOneAndUpdate(data.filter, data.updatedFields);
         if (!todo) {
           console.log("Todos With Filters: ", data.filter, " don't exists....");
         }
 
-        
+
         // Handle Sending response back to the user
         console.log("Successfully Updated the Todo", todo);
+
+        // Publish the Final Response to the Redis Pub/Sub and Then Redis Pub/Sub & Websocket will handle the delivery of the final result to the respective client
+        await publishToRedisPubSub("todo.update.responses", JSON.stringify({ data: todo, metadata: metadata }));
 
 
       },

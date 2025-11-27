@@ -2,17 +2,19 @@ import "dotenv/config";
 import express from "express";
 import http from "http";
 import path, { resolve } from "path";
-import { Server } from "socket.io";
+
 import cors from "cors";
 
 import todoRouter from "./routes/todoRoutes.js";
 import { connectProducer } from "./utils/kafkaProducer.js";
 
+import { clientToWebSocketMap, createWebSocketServer } from "./utils/webSocket.js";
+import { createRedisPubSubSubscribers } from "./utils/redisSubscriber.js";
+
 const PORT = process.env.PORT || 4000;
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
 
 
 const initialConfigurations = async () => {
@@ -40,10 +42,34 @@ app.use(express.json());
 
 
 // Web Socket Connection Configuration
-io.on('connection', (socket) => {
-  socket.on('chat message', (msg) => {
-    io.emit('chat message', msg);
-  });
+// WS server
+const wss = createWebSocketServer(server);
+app.set("wss", wss);
+
+
+// Create the Redis Pub/Sub Subscribers so that final response of the Query of REST API Endpoints can be sent
+createRedisPubSubSubscribers(["todo.read.responses", "todo.create.responses", "todo.update.responses", "todo.delete.responses"], (channel, msg) => {
+  console.log("Got message: ", msg, " from the channel: ", channel);
+
+  const messageFromChannel = JSON.parse(msg);
+  console.log("Got Parsed the Message: ", messageFromChannel);
+  // const againParsedMessageFromChannel = JSON.parse(messageFromChannel);
+  // console.log("Got Again Parsed the Message: ", againParsedMessageFromChannel);
+  
+  const { data, metadata } = messageFromChannel;
+  console.log("We have got the data: ", data, "and the metadata: ",metadata);
+  
+  const { requestId, clientId } = metadata;
+
+  const socket = clientToWebSocketMap.get(clientId);
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    console.log("Client is Connected thus sending the response: ", JSON.stringify(({ requestId, data, metadata })));
+    socket.send(JSON.stringify({ type: channel, data, metadata }));
+  }
+  else {
+    console.log("Client is Not Connected thus not sending the response: ", JSON.stringify(({ requestId, data, metadata })));
+  }
+
 });
 
 
@@ -61,7 +87,7 @@ app.get("/", (req, res) => {
 
 server.listen(PORT, async () => {
   console.log(process.env);
-  
+
   console.log('listening on *:', PORT);
   await initialConfigurations();
 });
