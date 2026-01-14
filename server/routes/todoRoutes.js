@@ -12,7 +12,7 @@ const todoRouter = express.Router();
  * @access public
  * @method GET
  */
-todoRouter.get("/todos/:userId/:priority/:status", getAllToDosController);
+todoRouter.get("/todos", getAllToDosController);
 
 
 /**

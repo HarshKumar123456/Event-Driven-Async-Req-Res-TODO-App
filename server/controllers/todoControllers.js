@@ -9,7 +9,6 @@ const getAllToDosController = async (req, res) => {
 
     try {
         // Extracting information from req.body
-        const { userId, priority, status } = req.params;
         console.log("We got the Headers: ", req);
         const clientId = req.get("client-id");
         const requestId = uuidv4();
@@ -24,19 +23,9 @@ const getAllToDosController = async (req, res) => {
             });
         } 
 
-        // If Priority is Given Filter on basis of priority
-        if (priority) {
-            filter.priority = priority;
-        }
-
-        // If Priority is Given Filter on basis of priority
-        if (status) {
-            filter.status = status;
-        }
 
         // Push the Get Todo Event In Queue
         const data = {
-            userId: userId,
             filter: filter,
         };
         const dateNow = new Date();
@@ -48,7 +37,7 @@ const getAllToDosController = async (req, res) => {
             updateAt: dateNow.toISOString(),
         }
         const topicOnWhichToBePublished = "todo.read";
-        const partitionOnWhichToBePublished = (userId) % defaultNumberOfPartitions;
+        const partitionOnWhichToBePublished = (Math.floor(40*(Math.random()))) % defaultNumberOfPartitions;
         await sendEvent(topicOnWhichToBePublished, partitionOnWhichToBePublished, data, metadata);
 
 
