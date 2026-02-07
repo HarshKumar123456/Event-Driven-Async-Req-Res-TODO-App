@@ -2,71 +2,16 @@
 <html>
 
 <head>
-  <title>Socket.IO chat</title>
-  <style>
-    body {
-      margin: 0;
-      padding-bottom: 3rem;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    #form {
-      background: rgba(0, 0, 0, 0.15);
-      padding: 0.25rem;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      display: flex;
-      height: 3rem;
-      box-sizing: border-box;
-      backdrop-filter: blur(10px);
-    }
-
-    #input {
-      border: none;
-      padding: 0 1rem;
-      flex-grow: 1;
-      border-radius: 2rem;
-      margin: 0.25rem;
-    }
-
-    #input:focus {
-      outline: none;
-    }
-
-    #form>button {
-      background: #333;
-      border: none;
-      padding: 0 1rem;
-      margin: 0.25rem;
-      border-radius: 3px;
-      outline: none;
-      color: #fff;
-    }
-
-    #messages {
-      list-style-type: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    #messages>li {
-      padding: 0.5rem 1rem;
-    }
-
-    #messages>li:nth-child(odd) {
-      background: #efefef;
-    }
-  </style>
+  <title>Event Driven TODO App | Harsh Kumar </title>
 </head>
 
 <body>
-  <ul id="messages"></ul>
-  <form id="form" action="">
-    <input id="input" autocomplete="off" /><button>Send</button>
-  </form>
 
+  <h1>This File is Just to Connect the WebSocket</h1>
+  <h2>To Serve the Purpose of Inspecting everything that is coming to the Response of the Requests made to the API GW</h2>
+  <h3>Please open Browser Developer Console and go to Network and select the WebSocket Connection from there and see the data flow</h3>
+
+  <div id="recent-event-data-container"></div>
 </body>
 
 <script>
@@ -93,7 +38,7 @@
     alert(`[error] ${error.message}`);
   };
   socket.onmessage = function (event) {
-    document.getElementById("wind_speed_last").textContent = 'value from event'
+    document.getElementById("recent-event-data-container").textContent = 'value from event'
   };
 
 </script>

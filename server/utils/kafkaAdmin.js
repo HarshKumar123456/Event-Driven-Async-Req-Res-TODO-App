@@ -9,14 +9,13 @@ This file is responsible for creating the Kafka Topics for more information read
 . We are using by default 4 partitions as of now if the requirements goes up than it then we can always configure the partitions' count in specific topic and to know about how to do that head over to the Kafkajs docs
 
 
-- PLEASE NOTE: We have to manually run this file to create topics in Kafka else unexpected behaviour may arise
 
 */
 
 
 const defaultNumberOfPartitions = process.env.DEFAULT_PARTITIONS_OF_KAFKA_TOPICS || 4;
 
-async function init() {
+async function initializeTopics() {
     try {
 
         const admin = kafka.admin();
@@ -56,4 +55,4 @@ async function init() {
     }
 }
 
-init();
+export { initializeTopics };

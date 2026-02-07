@@ -1,0 +1,156 @@
+###################################################
+# Services
+#
+# The services define the individual components of our application stack.
+# For each service, a separate container will be launched.
+###################################################
+services:
+  ###################################################
+  # Service: client
+  #
+  # The client service is the React app that provides the frontend for the app.
+  # When the container starts, it will use the image that results from building
+  # the Dockerfile, targeting the dev stage.
+  #
+  # The Compose Watch configuration is used to automatically sync the code from
+  # the host machine to the container. This allows the client to be automatically
+  # reloaded when code changes are made.
+  # 
+  ###################################################
+  client:
+    image: harshku007/event-driven-todo-client:1.0.0
+    volumes:
+      - ./client:/app
+    ports:
+      - 5173:5173
+
+
+
+
+
+
+
+
+
+
+  ###################################################
+  # ZOOKEEPER
+  ###################################################
+  zookeeper:
+    image: zookeeper
+    ports:
+      - "2181:2181"
+
+
+
+
+
+
+
+
+  ###################################################
+  # KAFKA
+  ###################################################
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+
+
+
+
+
+
+
+  ###################################################
+  # REDIS
+  ###################################################
+  redis:
+    image: redis/redis-stack
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+
+
+
+
+
+
+
+
+  ###################################################
+  # API GATEWAY
+  ###################################################
+  api-gateway:
+    image: harshku007/event-driven-todo-api-gateway:1.0.0
+    volumes:
+      - ./server:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - kafka
+      - redis
+    env_file:
+      - ./main.conf
+
+
+
+
+  ###################################################
+  # READ TODO WORKER
+  ###################################################
+  todo-read:
+    image: harshku007/event-driven-todo-consumer-read:1.0.0
+    volumes:
+      - ./server:/app
+    depends_on:
+      - kafka
+      - redis
+    env_file:
+      - ./main.conf
+
+  ###################################################
+  # CREATE TODO WORKER
+  ###################################################
+  todo-create:
+    image: harshku007/event-driven-todo-consumer-create:1.0.0
+    volumes:
+      - ./server:/app
+    depends_on:
+      - kafka
+      - redis
+    env_file:
+      - ./main.conf
+
+  ###################################################
+  # UPDATE TODO WORKER
+  ###################################################
+  todo-update:
+    image: harshku007/event-driven-todo-consumer-update:1.0.0
+    volumes:
+      - ./server:/app
+    depends_on:
+      - kafka
+      - redis
+    env_file:
+      - ./main.conf
+
+  ###################################################
+  # DELETE TODO WORKER
+  ###################################################
+  todo-delete:
+    image: harshku007/event-driven-todo-consumer-delete:1.0.0
+    volumes:
+      - ./server:/app
+    depends_on:
+      - kafka
+      - redis
+    env_file:
+      - ./main.conf

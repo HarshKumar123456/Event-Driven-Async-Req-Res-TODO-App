@@ -6,11 +6,13 @@ const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://<username>:<passwo
 const connectDB = async () => {
     try {
         console.log(process.env);
-        
+
         console.log(MONGODB_URI);
-        
-        await mongoose.connect(`${MONGODB_URI}`);
-        console.log("MongoDB is connected....");  
+
+        await mongoose.connect(`${MONGODB_URI}`, {
+            family: 4,
+        });
+        console.log("MongoDB is connected....");
     } catch (error) {
         console.log(`Error connecting MongoDB ${error}`);
     }

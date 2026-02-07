@@ -10,8 +10,9 @@ import { connectProducer } from "./utils/kafkaProducer.js";
 
 import { clientToWebSocketMap, createWebSocketServer } from "./utils/webSocket.js";
 import { createRedisPubSubSubscribers } from "./utils/redisSubscriber.js";
+import { initializeTopics } from "./utils/kafkaAdmin.js";
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8000;
 
 const app = express();
 const server = http.createServer(app);
@@ -19,6 +20,9 @@ const server = http.createServer(app);
 
 const initialConfigurations = async () => {
   try {
+
+    // Kafka Admin Initialize Topics
+    initializeTopics();
 
     // Connect the Producer
     connectProducer();
@@ -55,10 +59,10 @@ createRedisPubSubSubscribers(["todo.read.responses", "todo.create.responses", "t
   console.log("Got Parsed the Message: ", messageFromChannel);
   // const againParsedMessageFromChannel = JSON.parse(messageFromChannel);
   // console.log("Got Again Parsed the Message: ", againParsedMessageFromChannel);
-  
+
   const { data, metadata } = messageFromChannel;
-  console.log("We have got the data: ", data, "and the metadata: ",metadata);
-  
+  console.log("We have got the data: ", data, "and the metadata: ", metadata);
+
   const { requestId, clientId } = metadata;
 
   const socket = clientToWebSocketMap.get(clientId);
@@ -86,7 +90,8 @@ app.get("/", (req, res) => {
 });
 
 server.listen(PORT, async () => {
-  console.log(process.env);
+  // Please do not log your secrets 
+  // console.log(process.env);
 
   console.log('listening on *:', PORT);
   await initialConfigurations();

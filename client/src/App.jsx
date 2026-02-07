@@ -1,84 +1,51 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState } from "react";
+import { useWebSocketContext } from "./context/WebSocketContext";
+import { useSocketListener } from "./hooks/useSocketListener";
 
 function App() {
-  const [clientId, setClientId] = useState(null);
+  const { isConnected, clientId } = useWebSocketContext();
+
   const [todos, setTodos] = useState([]);
   const [name, setName] = useState("");
   const [priority, setPriority] = useState("low");
   const [status, setStatus] = useState("pending");
   const [operation, setOperation] = useState("");
-  const wsRef = useRef(null);
 
-  const WS_URL = "ws://localhost:8000";
   const API_BASE = "http://localhost:8000/api/v1/todo";
   const USER_ID = "007";
 
-  const startWebSocketConnection = () => {
-    try {
-      const socket = new WebSocket(WS_URL);
-      wsRef.current = socket;
+  console.log("Websocket Connect hai kya ", isConnected === true ? "are haan bhai haan!" : "are na bhai na", " Client Id: ", clientId);
 
-      socket.onopen = async () => {
-        console.log("WebSocket connected to", WS_URL);
-        await fetchTodos();
-      };
 
-      socket.onmessage = async (event) => {
-        console.log("Raw WS message:", event.data);
-        let parsed = null;
-        try {
-          parsed = JSON.parse(event.data);
-        } catch (err) {
-          console.warn("Failed to parse websocket message", err);
-          return;
-        }
+  // Websocket Event Listening Logic - Starts Here
+  // Listener 1: Handle Todo Reads
+  useSocketListener(
+    // Selector: "Is this message for me?"
+    (msg) => msg.type?.includes('todo.read.responses'),
 
-        console.log("WS parsed message:", parsed);
-
-        // Handle initial connection message
-        if (parsed.type === "connected" && parsed.clientId) {
-          setClientId(parsed.clientId);
-          console.log("Received clientId from server:", parsed.clientId);
-        }
-
-        // Handle read responses from server
-        if (parsed.type && parsed.type.includes("todo.read.responses")) {
-          const data = parsed.data || [];
-          setTodos(prev => {
-            const incoming = Array.isArray(data) ? data : [data];
-            return incoming;
-          });
-
-          console.log("Updated todos from WS:", data);
-        }
-
-        // Generic logging for other channels
-        if (parsed.type && !parsed.type.includes("todo.read.responses")) {
-          console.log("WS channel message:", parsed.type);
-          // console.log("WS channel message:", parsed.type, parsed.data || parsed.metadata || parsed);
-        }
-      };
-
-      socket.onclose = (event) => {
-        console.log("WebSocket closed:", event.code, event.reason);
-      };
-
-      socket.onerror = (error) => {
-        console.error("WebSocket error:", error);
-      };
-    } catch (error) {
-      console.error("Failed to start websocket", error);
+    // Handler: "What do I do with it?"
+    (msg) => {
+      setOperation("Got Todos Successfully...."); // Clear loading state
+      const incoming = Array.isArray(msg.data) ? msg.data : [msg.data];
+      // You can merge or replace depending on your logic
+      setTodos(incoming);
+      console.log("Updated via WS");
     }
-  };
+  );
 
-  useEffect(() => {
-    startWebSocketConnection();
 
-    return () => {
-      if (wsRef.current) wsRef.current.close();
-    };
-  }, []);
+  // Listener 2: Handle Todo Updates
+  useSocketListener(
+    // Selector: "Is this message for me?"
+    (msg) => msg.type?.includes("todo.create.responses") || msg.type?.includes("todo.update.responses") || msg.type?.includes("todo.delete.responses"),
 
+    // Handler: "What do I do with it?"
+    async (msg) => {
+      await fetchTodos();
+    }
+  );
+
+  // Websocket Event Listening Logic - Ends Here
 
 
 

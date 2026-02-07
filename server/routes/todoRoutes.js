@@ -7,7 +7,7 @@ const todoRouter = express.Router();
 // Routes
 
 /**
- * @todoRouter /api/v1/todo/todos/:userId/:priority/:status
+ * @todoRouter /api/v1/todo/todos
  * @description GET All Todos
  * @access public
  * @method GET
